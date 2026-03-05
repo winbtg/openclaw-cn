@@ -7,6 +7,7 @@ Docs: https://clawd.org.cn/
 ### bug修复
 
 - **DM 多 Agent 内容路由**：新增 `agents.list[].dmChat.mentionPatterns` 配置项，支持在私信（DM）场景下通过消息关键词/正则将消息路由到指定 Agent；修复 `DmConfig` 类型缺少 `mentionPatterns` 字段导致配置无效的问题（#460）
+- **飞书多机器人群 @ 检测修复**：修复一群多 Agent 时 `@机器人` 路由错误的问题。根本原因：`/bot/v3/info` 返回的是机器人的「应用身份」`open_id`，而群消息 `mentions` 中携带的是「用户身份」`open_id`，两者不同导致 `@` 检测失败。修复方案：新增以机器人名称（`app_name`/`botName`）为兜底的匹配逻辑，当 `open_id` 不匹配时使用名称二次确认（#463）
 
 ## 0.1.7
 

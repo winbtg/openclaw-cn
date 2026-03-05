@@ -48,11 +48,16 @@ export async function monitorFeishuProvider(opts: MonitorFeishuOpts = {}): Promi
 
   // Fetch bot info to get bot's open_id for @mention detection
   let botOpenId: string | undefined;
+  let botAppName: string | undefined;
   try {
     const probeResult = await probeFeishu(appId, appSecret, 5000, feishuCfg.domain);
     if (probeResult.ok && probeResult.bot?.openId) {
       botOpenId = probeResult.bot.openId;
       logger.info(`Feishu bot open_id: ${botOpenId}`);
+    }
+    if (probeResult.ok && probeResult.bot?.appName) {
+      botAppName = probeResult.bot.appName;
+      logger.info(`Feishu bot app_name: ${botAppName}`);
     }
   } catch (err) {
     logger.warn(`Failed to fetch bot info for @mention detection: ${String(err)}`);
@@ -96,6 +101,7 @@ export async function monitorFeishuProvider(opts: MonitorFeishuOpts = {}): Promi
           resolvedConfig: feishuCfg,
           credentials: { appId, appSecret },
           botName: account.name,
+          botAppName,
           // @ts-ignore -- cherry-pick upstream type mismatch
           // @ts-ignore -- cherry-pick upstream type mismatch
           botOpenId,

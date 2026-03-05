@@ -59,6 +59,12 @@ export type ProcessFeishuMessageOptions = {
   botName?: string;
   /** Bot's own open_id for @mention detection in groups */
   botOpenId?: string;
+  /**
+   * Bot's app name fetched from /bot/v3/info (Feishu-authoritative).
+   * Used as a fallback for @mention detection when botOpenId (application-level
+   * open_id) differs from the user-level open_id stored in group @mention events.
+   */
+  botAppName?: string;
 };
 
 export async function processFeishuMessage(
@@ -228,10 +234,25 @@ export async function processFeishuMessage(
   const mentions: FeishuMention[] =
     (message.mentions as FeishuMention[]) ?? (payload.mentions as FeishuMention[]) ?? [];
   const botOpenId = options.botOpenId;
+  // Names to match against for fallback mention detection (when application-level
+  // open_id from /bot/v3/info differs from the user-level open_id in mentions).
+  const botNames: string[] = [options.botAppName, options.botName]
+    .filter((n): n is string => Boolean(n?.trim()))
+    .map((n) => n.trim().toLowerCase());
   // Check if the bot itself was mentioned, not just any @mention
-  const wasMentioned = botOpenId
-    ? mentions.some((m) => m.id?.open_id === botOpenId)
-    : mentions.length > 0; // Fallback if botOpenId not available
+  const wasMentioned =
+    // Primary: match by open_id from /bot/v3/info
+    (botOpenId ? mentions.some((m) => m.id?.open_id === botOpenId) : false) ||
+    // Fallback: match by bot name — /bot/v3/info returns application-level open_id
+    //   which may differ from the user-level open_id stored in group @mention events;
+    //   using the bot name is a reliable secondary check in multi-bot groups.
+    (botNames.length > 0
+      ? mentions.some(
+          (m) => Boolean(m.name?.trim()) && botNames.includes(m.name!.trim().toLowerCase()),
+        )
+      : false) ||
+    // Last resort: any mention present (when neither open_id nor name is available)
+    (!botOpenId && botNames.length === 0 && mentions.length > 0);
 
   // In group chat, check requireMention setting
   if (isGroup) {
