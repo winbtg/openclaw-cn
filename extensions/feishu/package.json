@@ -73,7 +73,7 @@
     "install": {
       "npmSpec": "@openclaw-cn/feishu",
       "localPath": "extensions/feishu",
-      "defaultChoice": "local"
+      "defaultChoice": "npm"
     }
   }
 }
