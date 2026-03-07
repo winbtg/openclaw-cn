@@ -169,14 +169,10 @@ function resolveInstallInfo(params: {
 }): ChannelPluginCatalogEntry["install"] | null {
   const npmSpec = params.manifest.install?.npmSpec?.trim() ?? params.packageName?.trim();
   if (!npmSpec) return null;
-  let localPath = params.manifest.install?.localPath?.trim() || undefined;
+  const npmOnly = params.manifest.install?.defaultChoice === "npm";
+  let localPath = npmOnly ? undefined : params.manifest.install?.localPath?.trim() || undefined;
   // Only auto-derive local path when the manifest doesn't explicitly prefer npm
-  if (
-    !localPath &&
-    params.manifest.install?.defaultChoice !== "npm" &&
-    params.workspaceDir &&
-    params.packageDir
-  ) {
+  if (!localPath && !npmOnly && params.workspaceDir && params.packageDir) {
     localPath = path.relative(params.workspaceDir, params.packageDir) || undefined;
   }
   const defaultChoice = params.manifest.install?.defaultChoice ?? (localPath ? "local" : "npm");
