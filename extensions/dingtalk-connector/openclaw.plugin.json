@@ -1,0 +1,9 @@
+{
+  "id": "dingtalk-connector",
+  "channels": ["dingtalk-connector"],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}
