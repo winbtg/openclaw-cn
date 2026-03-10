@@ -6,6 +6,8 @@ Docs: https://clawd.org.cn/
 
 ### bug修复（0.1.8 热补丁）
 
+- **Windows 插件路径验证误报修复**（`0.1.8-fix.3`）：修复在 Windows 上全局安装的插件（如飞书、钉钉、企业微信、QQ）启动时报 `plugin: openclaw.extensions entry resolves outside package directory` 导致配置无效的问题。根本原因：`isPathInsideWithRealpath` 在 Windows 含短路径（8.3 格式）或 junction 点的目录上调用 `realpathSync` 会抛异常，旧逻辑直接返回 `false` 拒绝合法路径。修复方案：异常时回退到词法路径比较，而非拒绝
+
 - **Windows 插件安装崩溃修复**：修复在 Windows 环境下运行配置向导安装飞书/钉钉/企业微信等插件时，`npm pack` 子进程触发 `spawn EINVAL` 错误导致向导直接退出的问题。根本原因一：`stdin: inherit` 在非 TTY 环境下 Windows 不允许（`0.1.8-fix.1` 已修复）。根本原因二（`0.1.8-fix.2`）：`.cmd` 批处理文件在 Windows 上不能被直接 `spawn`，必须通过 `cmd.exe /d /s /c` 包装执行。修复方案：新增 `resolveCommandArgv()` 函数，在 Windows 上对 `npm`/`pnpm` 等命令自动用 `cmd.exe` 包装，消除 `spawn EINVAL`
 - **SIGUSR1 重启后插件不重载修复**：修复 `openclaw-cn gateway restart` 或发送 SIGUSR1 后，飞书等 npm 安装的插件无法重新加载导致连接断开的问题。根本原因：`loader.ts` 新增的"source 文件不存在时跳过捆绑壳"逻辑错误地调用了 `seenIds.set(pluginId, "bundled")`，导致后续同 id 的 npm 安装版本被判定为重复而跳过。修复方案：source 不存在时不占用 `seenIds`，让 npm 安装版本正常加载
 

@@ -36,7 +36,9 @@ export function isPathInsideWithRealpath(
     const relative = path.relative(realBase, realTarget);
     return Boolean(relative) && !relative.startsWith("..") && !path.isAbsolute(relative);
   } catch {
-    // If realpath fails (symlink target doesn't exist or access denied), reject.
-    return false;
+    // realpathSync can fail on Windows with short (8.3) paths, junction points,
+    // or permission-restricted directories. Fall back to lexical comparison so
+    // legitimate globally-installed plugins are not rejected.
+    return isPathInside(baseDir, targetPath);
   }
 }
